@@ -12,9 +12,9 @@ class UsersController
 {
     private MysqlUsersRepository $usersRepository;
 
-    public function __construct()
+    public function __construct(MysqlUsersRepository $usersRepository)
     {
-        $this->usersRepository = new MysqlUsersRepository();
+        $this->usersRepository = $usersRepository;
     }
 
     public function login(): View

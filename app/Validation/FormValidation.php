@@ -19,17 +19,17 @@ class FormValidation
     {
         $this->errors = [];
 
-        if (empty($_POST['email']))
+        if (empty($data['email']))
         {
             $this->errors[] = "Email can't be empty";
         }
 
-        if (empty($_POST['username']))
+        if (empty($data['username']))
         {
             $this->errors[] = "Username can't be empty";
         }
 
-        if (empty($_POST['password']))
+        if (empty($data['password']))
         {
             $this->errors[] = "Password can't be empty";
         }

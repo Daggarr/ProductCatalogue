@@ -1,95 +1,52 @@
 <?php
 namespace App\Controllers;
 
-use App\Models\Collections\ProductsCollection;
-use App\Models\Product;
 use App\Repositories\MysqlProductsRepository;
-use App\Repositories\MysqlProductTagRepository;
+use App\Services\Products\DeleteProductsService;
+use App\Services\Products\GetProductsService;
+use App\Services\Products\StoreProductsService;
 use App\View;
-use Ramsey\Uuid\Uuid;
 
 class ProductsController
 {
     private MysqlProductsRepository $productsRepository;
 
-    public function __construct()
+    public function __construct(MysqlProductsRepository $productsRepository)
     {
-        $this->productsRepository = new MysqlProductsRepository();
+        $this->productsRepository = $productsRepository;
     }
 
     public function index(): ?View
     {
-            $products = $this->productsRepository->getAll();
+        $service = new GetProductsService($this->productsRepository, $_GET);
+        $products = $service->execute();
 
-            if ($_GET['category'] !== "" && isset($_GET['category']))
-            {
-                $products = $this->productsRepository->getByCategory($_GET['category']);
-            }
-
-            if (!empty($_GET['tags']))
-            {
-                $filteredByTags = new ProductsCollection();
-
-                foreach ($products->getProducts() as $product)
-                {
-                    if (count(array_intersect($_GET['tags'],$product->getTags())) === count($_GET['tags']))
-                    {
-                        $filteredByTags->add($product);
-                    }
-                }
-
-                $products = $filteredByTags;
-            }
-
-            return new View('products.twig',['products' => $products]);
+        return new View('products.twig',['products' => $products]);
     }
 
     public function create(): ?View
     {
-            return new View('productCreate.twig',[]);
-
+        return new View('productCreate.twig',[]);
     }
 
     public function edit(array $vars): ?View
     {
-            return new View('productEdit.twig',['vars' => $vars]);
+        return new View('productEdit.twig',['vars' => $vars]);
     }
 
     public function delete(array $vars)
     {
-            $id = $vars['id'] ?? null;
+        $service = new DeleteProductsService($this->productsRepository, $vars);
+        $service->execute();
 
-            if ($id == null) header('Location: /products');
-
-            $product = $this->productsRepository->getById($id);
-
-            if ($product !== null)
-            {
-                $this->productsRepository->delete($product);
-            }
-
-            header('Location: /products');
+        header('Location: /products');
     }
 
     public function store()
     {
-            $product = new Product(
-                Uuid::uuid4(),
-                $_POST['name'],
-                $_POST['quantity'],
-                $_POST['category'],
-                $_SESSION['authId']
-            );
+        $service = new StoreProductsService($this->productsRepository, $_POST);
+        $service->execute();
 
-            $productTagRepository = new MysqlProductTagRepository();
-
-            foreach ($_POST['tags'] as $tagId)
-            {
-                $productTagRepository->save($product->getId(),$tagId);
-            }
-
-            $this->productsRepository->save($product);
-
-            header('Location: /products');
+        header('Location: /products');
     }
 }
